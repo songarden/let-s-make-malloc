@@ -31,7 +31,7 @@
 #define LINENUM(i) (i+5) /* cnvt trace request nums to linenums (origin 1) */
 
 /* Returns true if p is ALIGNMENT-byte aligned */
-#define IS_ALIGNED(p)  ((((unsigned int)(p)) % ALIGNMENT) == 0)
+#define IS_ALIGNED(p)  ((((unsigned int )(p)) % ALIGNMENT) == 0)
 
 /****************************** 
  * The key compound data types 
@@ -584,6 +584,7 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
     char *oldp;
     char *p;
     
+	
     /* Reset the heap and free any records in the range list */
     mem_reset_brk();
     clear_ranges(ranges);

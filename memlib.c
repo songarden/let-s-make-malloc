@@ -24,6 +24,7 @@ static char *mem_max_addr;   /* largest legal heap address */
  */
 void mem_init(void)
 {
+    
     /* allocate the storage we will use to model the available VM */
     if ((mem_start_brk = (char *)malloc(MAX_HEAP)) == NULL) {
 	fprintf(stderr, "mem_init_vm: malloc error\n");
