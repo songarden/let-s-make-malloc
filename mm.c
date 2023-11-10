@@ -131,14 +131,14 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
     }
 
-    if ((bp = next_fit(asize)) != NULL){
+    if ((bp = custom_best_fit_2(asize)) != NULL){
         place(bp, asize);
         return bp;
     }
 
     coalesce_delay_v();
     //delay merging block
-    if ((bp = next_fit(asize)) != NULL){
+    if ((bp = first_fit(asize)) != NULL){
         place(bp,asize);
         return bp;
     }
@@ -390,16 +390,3 @@ static void place(void *bp , size_t asize){
         PUT(FTRP(bp) , PACK(csize, 1));
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
