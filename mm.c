@@ -68,6 +68,7 @@ team_t team = {
 
 static void *extend_heap(size_t words);
 static void *coalesce(void *bp);
+static void *coalesce_delay_v();
 static void *first_fit(size_t asize);
 static void *next_fit(size_t asize);
 static void *best_fit(size_t asize);
@@ -130,8 +131,15 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
     }
 
-    if ((bp = custom_best_fit_2(asize)) != NULL){
+    if ((bp = next_fit(asize)) != NULL){
         place(bp, asize);
+        return bp;
+    }
+
+    coalesce_delay_v();
+    //delay merging block
+    if ((bp = next_fit(asize)) != NULL){
+        place(bp,asize);
         return bp;
     }
 
@@ -152,12 +160,13 @@ void mm_free(void *bp)
 
     PUT(HDRP(bp) , PACK(size,0));
     PUT(FTRP(bp) , PACK(size,0));
-    coalesce(bp);
+    // coalesce(bp);
 }
 
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
  */
+
 void *mm_realloc(void *ptr, size_t size)
 {
     void *oldptr = ptr;
@@ -230,6 +239,20 @@ static void *coalesce(void *bp){
     }
 
     return bp;
+}
+
+static void *coalesce_delay_v(void){
+    void *bp;
+    for(bp = heap_listp; GET_SIZE(HDRP(NEXT_BLKP(bp)))>0; bp = NEXT_BLKP(bp)){
+        if (!GET_ALLOC(HDRP(bp))){
+            while(!GET_ALLOC(HDRP(NEXT_BLKP(bp)))){
+                size_t size = GET_SIZE(HDRP(bp)) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+                PUT(HDRP(bp), PACK(size, 0));
+                PUT(FTRP(bp), PACK(size, 0));
+            }
+            next_bp = bp;
+        }
+    }
 }
 
 static void *first_fit(size_t asize){
