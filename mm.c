@@ -131,17 +131,17 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
     }
 
-    if ((bp = custom_best_fit_2(asize)) != NULL){
+    if ((bp = next_fit(asize)) != NULL){
         place(bp, asize);
         return bp;
     }
 
-    coalesce_delay_v();
-    //delay merging block
-    if ((bp = first_fit(asize)) != NULL){
-        place(bp,asize);
-        return bp;
-    }
+    // coalesce_delay_v();
+    // //delay merging block
+    // if ((bp = first_fit(asize)) != NULL){
+    //     place(bp,asize);
+    //     return bp;
+    // }
 
     extendsize = MAX(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL){
@@ -160,7 +160,7 @@ void mm_free(void *bp)
 
     PUT(HDRP(bp) , PACK(size,0));
     PUT(FTRP(bp) , PACK(size,0));
-    // coalesce(bp);
+    coalesce(bp);
 }
 
 /*
@@ -171,8 +171,27 @@ void *mm_realloc(void *ptr, size_t size)
 {
     void *oldptr = ptr;
     void *newptr;
-    size_t copySize;
+    size_t this_size = GET_SIZE(HDRP(ptr));
+    size_t copySize,asize;
     
+    if (this_size - DSIZE >= size){
+        if (size <= DSIZE){
+            asize = 2*DSIZE;
+        }
+        else{
+            asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
+        }
+
+        if((this_size - asize) >= (2*DSIZE)) {
+            PUT(HDRP(ptr) , PACK(asize , 1));
+            PUT(FTRP(ptr) , PACK(asize , 1));
+            PUT(HDRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
+            PUT(FTRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
+        }
+        next_bp = ptr;
+        return ptr;
+    }
+
     newptr = mm_malloc(size);
     if (newptr == NULL)
       return NULL;
