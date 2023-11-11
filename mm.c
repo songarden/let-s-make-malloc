@@ -186,12 +186,12 @@ void *mm_realloc(void *ptr, size_t size)
         return oldptr;
     }
     else if (oldSize-DSIZE < size){
-        if ((!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) && (csize >= size - oldSize - DSIZE)){
-            if (size - oldSize-DSIZE <= DSIZE){
+        if ((!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) && (csize >= size - (oldSize - DSIZE) )){
+            if (size - (oldSize - DSIZE) <= DSIZE){
                 asize = 2*DSIZE; //추가 요구 블럭
                 bsize = csize - asize;
             }
-            else if(csize - (size - oldSize/DSIZE) <= DSIZE){
+            else if(csize+oldSize - (size + DSIZE) <= DSIZE){
                 asize = oldSize + csize;
                 PUT(HDRP(ptr) , PACK(asize , 1));
                 PUT(FTRP(ptr) , PACK(asize , 1));
@@ -199,7 +199,7 @@ void *mm_realloc(void *ptr, size_t size)
                 return ptr;
             }
             else{
-                asize = DSIZE * (((size - oldSize/DSIZE)+(DSIZE) + (DSIZE-1)) / DSIZE);
+                asize = DSIZE * (((size - (oldSize-DSIZE)+(DSIZE) + (DSIZE-1)) / DSIZE));
                 bsize = csize - asize;
             }
             PUT(HDRP(ptr) , PACK(asize+oldSize , 1));
@@ -214,7 +214,7 @@ void *mm_realloc(void *ptr, size_t size)
             newptr = mm_malloc(size);
             if (newptr == NULL)
                 return NULL;
-            memcpy(newptr, oldptr, oldSize);
+            memcpy(newptr, oldptr, oldSize - DSIZE);
             mm_free(oldptr);
             next_bp=newptr;
             return newptr;
