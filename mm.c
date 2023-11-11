@@ -136,12 +136,12 @@ void *mm_malloc(size_t size)
         return bp;
     }
 
-    coalesce_delay_v();
-    //delay merging block
-    if ((bp = first_fit(asize)) != NULL){
-        place(bp,asize);
-        return bp;
-    }
+    // coalesce_delay_v();
+    // //delay merging block
+    // if ((bp = first_fit(asize)) != NULL){
+    //     place(bp,asize);
+    //     return bp;
+    // }
 
     extendsize = MAX(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL){
@@ -160,7 +160,7 @@ void mm_free(void *bp)
 
     PUT(HDRP(bp) , PACK(size,0));
     PUT(FTRP(bp) , PACK(size,0));
-    // coalesce(bp);
+    coalesce(bp);
 }
 
 /*
@@ -191,6 +191,7 @@ void *mm_realloc(void *ptr, size_t size)
         next_bp = ptr;
         return ptr;
     }
+
 
     asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
     csize = GET_SIZE(HDRP(NEXT_BLKP(ptr))) + this_size;
