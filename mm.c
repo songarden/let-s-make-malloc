@@ -131,7 +131,7 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
     }
 
-    if ((bp = custom_best_fit_2(asize)) != NULL){
+    if ((bp = next_fit(asize)) != NULL){
         place(bp, asize);
         return bp;
     }
@@ -171,17 +171,70 @@ void *mm_realloc(void *ptr, size_t size)
 {
     void *oldptr = ptr;
     void *newptr;
+    size_t asize , bsize;
+    //asize = new_size - 원래 사이즈 -> 더블워드 적용한 , bsize = 다음 블럭의 크기 - 
+    size_t csize = GET_SIZE(HDRP(NEXT_BLKP(ptr))); //다음 블럭의 크기
     size_t copySize;
+    size_t oldSize;
     
-    newptr = mm_malloc(size);
-    if (newptr == NULL)
-      return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
-      copySize = size;
-    memcpy(newptr, oldptr, copySize);
-    mm_free(oldptr);
-    return newptr;
+    
+    
+
+    oldSize = GET_SIZE(HDRP(ptr));
+
+    if (oldSize-DSIZE == size){
+        return oldptr;
+    }
+    else if (oldSize-DSIZE < size){
+        if ((!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) && (csize >= size - oldSize - DSIZE)){
+            if (size - oldSize-DSIZE <= DSIZE){
+                asize = 2*DSIZE; //추가 요구 블럭
+                bsize = csize - asize;
+            }
+            else if(csize - (size - oldSize/DSIZE) <= DSIZE){
+                asize = oldSize + csize;
+                PUT(HDRP(ptr) , PACK(asize , 1));
+                PUT(FTRP(ptr) , PACK(asize , 1));
+                next_bp = ptr;
+                return ptr;
+            }
+            else{
+                asize = DSIZE * (((size - oldSize/DSIZE)+(DSIZE) + (DSIZE-1)) / DSIZE);
+                bsize = csize - asize;
+            }
+            PUT(HDRP(ptr) , PACK(asize+oldSize , 1));
+            PUT(FTRP(ptr) , PACK(asize+oldSize , 1));
+            PUT(FTRP(ptr) + WSIZE , PACK(bsize , 0));
+            PUT(FTRP(NEXT_BLKP(ptr)) , PACK(bsize , 0));
+            next_bp = ptr;
+
+            return ptr;
+        }
+        else{
+            newptr = mm_malloc(size);
+            if (newptr == NULL)
+                return NULL;
+            memcpy(newptr, oldptr, oldSize);
+            mm_free(oldptr);
+            next_bp=newptr;
+            return newptr;
+        }
+    }
+    else{
+        if (size <= DSIZE){
+            asize = 2*DSIZE;
+        }
+        else{
+            asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
+        }
+        PUT(HDRP(ptr) , PACK(asize, 1));
+        PUT(FTRP(ptr) , PACK(asize, 1));
+        PUT(HDRP(NEXT_BLKP(ptr)) , PACK(oldSize-asize , 0));
+        PUT(FTRP(NEXT_BLKP(ptr)) , PACK(oldSize-asize , 0));
+        next_bp = ptr;
+
+        return ptr;
+    }
 }
 
 
