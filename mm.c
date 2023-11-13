@@ -131,7 +131,7 @@ void *mm_malloc(size_t size)
         asize = DSIZE * ((size+(DSIZE) + (DSIZE-1)) / DSIZE);
     }
 
-    if ((bp = next_fit(asize)) != NULL){
+    if ((bp = custom_best_fit_2(asize)) != NULL){
         place(bp, asize);
         return bp;
     }
@@ -188,7 +188,7 @@ void *mm_realloc(void *ptr, size_t size)
             PUT(HDRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
             PUT(FTRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
         }
-        next_bp = ptr;
+        next_bp = NEXT_BLKP(ptr);
         return ptr;
     }
 
@@ -208,7 +208,7 @@ void *mm_realloc(void *ptr, size_t size)
             PUT(HDRP(ptr) , PACK(csize , 1));
             PUT(FTRP(ptr) , PACK(csize , 1));
         }
-        next_bp = ptr;
+        next_bp = NEXT_BLKP(ptr);
         return ptr;
 
     }
