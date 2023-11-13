@@ -188,7 +188,7 @@ void *mm_realloc(void *ptr, size_t size)
             PUT(HDRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
             PUT(FTRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
         }
-        next_bp = NEXT_BLKP(ptr);
+        next_bp = ptr;
         return ptr;
     }
 
@@ -208,7 +208,7 @@ void *mm_realloc(void *ptr, size_t size)
             PUT(HDRP(ptr) , PACK(csize , 1));
             PUT(FTRP(ptr) , PACK(csize , 1));
         }
-        next_bp = NEXT_BLKP(ptr);
+        next_bp = ptr;
         return ptr;
 
     }
