@@ -192,7 +192,7 @@ void *mm_realloc(void *ptr, size_t size)
             PUT(FTRP(ptr) , PACK(asize , 1));
             PUT(HDRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
             PUT(FTRP(NEXT_BLKP(ptr)) , PACK(this_size - asize , 0));
-            if(next_bp >= ptr && next_bp <= NEXT_BLKP(ptr))
+            if(next_bp >= ptr && next_bp <= FTRP(ptr))
                 next_bp = NEXT_BLKP(ptr);
             coalesce(NEXT_BLKP(ptr));
         }
@@ -219,7 +219,7 @@ void *mm_realloc(void *ptr, size_t size)
             PUT(HDRP(ptr) , PACK(csize , 1));
             PUT(FTRP(ptr) , PACK(csize , 1));
         }
-        if(next_bp >= ptr && next_bp <= NEXT_BLKP(ptr))
+        if(next_bp >= ptr && next_bp <= FTRP(ptr))
             next_bp = NEXT_BLKP(ptr);
         return ptr;
 
@@ -268,15 +268,17 @@ static void *coalesce(void *bp){
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
-        next_bp = bp;
+        if (next_bp >= HDRP(bp) && next_bp <= FTRP(bp))
+            next_bp = bp;
     }
 
     else if(!prev_alloc && next_alloc){
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp) , PACK(size,0));
         PUT(HDRP(PREV_BLKP(bp)) , PACK(size, 0));
-        next_bp = PREV_BLKP(bp);
         bp = PREV_BLKP(bp);
+        if (next_bp >= HDRP(bp) && next_bp <= FTRP(bp))
+            next_bp = bp;
         
     }
 
@@ -284,8 +286,9 @@ static void *coalesce(void *bp){
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)) , PACK(size,0));
         PUT(FTRP(NEXT_BLKP(bp)) , PACK(size,0));
-        next_bp = PREV_BLKP(bp);
         bp = PREV_BLKP(bp);
+        if (next_bp >= HDRP(bp) && next_bp <= FTRP(bp))
+            next_bp = bp;
     }
 
     return bp;
